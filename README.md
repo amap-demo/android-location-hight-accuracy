@@ -26,20 +26,17 @@
 |AMapLocationClientOption|	setLocationMode()|设置定位模式|V2.0.0|
 
 ## 核心难点##
-- 打开系统wifi设置界面
 
 ```java
-        Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
-        startActivity(intent); // 打开系统设置界面
+    //打开系统wifi设置界面
+    Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
+    startActivity(intent); // 打开系统设置界面
     
-```
-
-- 设置高精度模式
- 
- ```java
+    //设置高精度模式
     private AMapLocationClientOption getDefaultOption() {
         AMapLocationClientOption mOption = new AMapLocationClientOption();
         mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
         return mOption;
     }
- ```
+    
+```
