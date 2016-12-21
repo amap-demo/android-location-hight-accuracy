@@ -19,15 +19,16 @@
 ## 示例效果##
 
  - 定位结果展示
- 
  ![Screenshot](https://github.com/amap-demo/android-location-hight-accuracy/blob/master/resource/Screenshot.png?raw=true)
  
  ## 核心类/接口 ##
 | 类    | 接口  | 说明   | 版本  |
 | -----|:-----:|:-----:|:-----:|
 |AMapLocationClientOption|	setLocationMode()|设置定位模式|V2.0.0|
+
 ## 核心难点##
- - 打开系统wifi设置界面
+- 打开系统wifi设置界面
+
 ```java
     private void checkWifiSetting() {
         if (mWifiManager.isWifiEnabled()) {
@@ -41,7 +42,7 @@
 - 设置高精度模式
  
  ```java
-     private AMapLocationClientOption getDefaultOption() {
+    private AMapLocationClientOption getDefaultOption() {
         AMapLocationClientOption mOption = new AMapLocationClientOption();
         mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);//设置为高精度模式提升定位精度
         return mOption;
