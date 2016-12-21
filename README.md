@@ -16,12 +16,11 @@
 
  ![Screenshot](https://github.com/amap-demo/android-drive-route-plan/blob/master/resource/download.png)
 
-## 示例效果##
+## 定位结果展示##
 
- - 定位结果展示
  ![Screenshot](https://github.com/amap-demo/android-location-hight-accuracy/blob/master/resource/Screenshot.png?raw=true)
  
- ## 核心类/接口 ##
+## 核心类/接口 ##
 | 类    | 接口  | 说明   | 版本  |
 | -----|:-----:|:-----:|:-----:|
 |AMapLocationClientOption|	setLocationMode()|设置定位模式|V2.0.0|
@@ -44,7 +43,7 @@
  ```java
     private AMapLocationClientOption getDefaultOption() {
         AMapLocationClientOption mOption = new AMapLocationClientOption();
-        mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);//设置为高精度模式提升定位精度
+        mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
         return mOption;
     }
  ```
