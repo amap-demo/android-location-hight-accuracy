@@ -1,6 +1,7 @@
 package com.amap.hightlocation;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -12,6 +13,8 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+
+import android.app.AlertDialog;
 
 /**
  * 提升定位精度示例
@@ -76,8 +79,26 @@ public class MainActivity extends CheckPermissionsActivity
         if (mWifiManager.isWifiEnabled()) {
             return;
         }
-        Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
-        startActivity(intent); // 打开系统设置界面
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);  //先得到构造器
+        builder.setTitle("提示"); //设置标题
+        builder.setMessage("开启WIFI模块会提升定位准确性"); //设置内容
+        builder.setIcon(R.mipmap.ic_launcher);//设置图标，图片id即可
+        builder.setPositiveButton("去开启", new DialogInterface.OnClickListener() { //设置确定按钮
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss(); //关闭dialog
+                Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
+                startActivity(intent); // 打开系统设置界面
+            }
+        });
+        builder.setNegativeButton("不了", new DialogInterface.OnClickListener() { //设置取消按钮
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        //参数都设置完成了，创建并显示出来
+        builder.create().show();
     }
 
 
