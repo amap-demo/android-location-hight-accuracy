@@ -29,13 +29,9 @@
 - 打开系统wifi设置界面
 
 ```java
-    private void checkWifiSetting() {
-        if (mWifiManager.isWifiEnabled()) {
-            return;
-        }
         Intent intent = new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS);
         startActivity(intent); // 打开系统设置界面
-    }
+    
 ```
 
 - 设置高精度模式
