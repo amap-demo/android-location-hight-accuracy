@@ -5,75 +5,65 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.LocationSource;
+import com.amap.api.maps.SupportMapFragment;
 
 import android.app.AlertDialog;
+import android.widget.TextView;
 
 /**
  * 提升定位精度示例
  */
 public class MainActivity extends CheckPermissionsActivity
-        implements
-        View.OnClickListener {
+        implements LocationSource, AMapLocationListener {
 
-    private TextView tvResult;
-    private Button btLocation;
     private WifiManager mWifiManager;
+    private TextView mLocationErrText;
 
-    private AMapLocationClient locationClient = null;
-    private AMapLocationClientOption locationOption = new AMapLocationClientOption();
+    private AMap mMap;
+
+    private LocationSource.OnLocationChangedListener mListener;
+    private AMapLocationClient mlocationClient;
+    private AMapLocationClientOption mLocationOption;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setTitle(R.string.app_name);
+        mLocationErrText = (TextView) findViewById(R.id.location_errInfo_text);
         mWifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
-
-        initView();
-
-        //初始化定位
-        initLocation();
+        setUpMapIfNeeded();
     }
 
-    //初始化控件
-    private void initView() {
-        tvResult = (TextView) findViewById(R.id.tv_result);
-        btLocation = (Button) findViewById(R.id.bt_location);
-        btLocation.setOnClickListener(this);
+    private void setUpMapIfNeeded() {
+        if (mMap == null) {
+            mMap = ((SupportMapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.map)).getMap();
+            mMap.setLocationSource(this);// 设置定位监听
+            mMap.getUiSettings().setMyLocationButtonEnabled(true);// 设置默认定位按钮是否显示
+            mMap.setMyLocationEnabled(true);// 设置为true表示显示定位层并可触发定位，false表示隐藏定位层并不可触发定位，默认是false
+            // 设置定位的类型为定位模式 ，可以由定位、跟随或地图根据面向方向旋转几种
+            mMap.setMyLocationType(AMap.LOCATION_TYPE_LOCATE);
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        destroyLocation();
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (v.getId() == R.id.bt_location) {
-            if (btLocation.getText().equals(
-                    getResources().getString(R.string.startLocation))) {
-                btLocation.setText(getResources().getString(
-                        R.string.stopLocation));
-                tvResult.setText("正在定位...");
-                startLocation();
-                checkWifiSetting();
-            } else {
-                btLocation.setText(getResources().getString(
-                        R.string.startLocation));
-                stopLocation();
-                tvResult.setText("定位停止");
-            }
+        if (mlocationClient != null) {
+            mlocationClient.onDestroy();
         }
     }
+
 
     private void checkWifiSetting() {
         if (mWifiManager.isWifiEnabled()) {
@@ -101,89 +91,74 @@ public class MainActivity extends CheckPermissionsActivity
         builder.create().show();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setUpMapIfNeeded();
+    }
 
-    /**
-     * 初始化定位
-     *
-     * @author hongming.wang
-     * @since 2.8.0
-     */
-    private void initLocation() {
-        //初始化client
-        locationClient = new AMapLocationClient(this.getApplicationContext());
-        //设置定位参数
-        locationClient.setLocationOption(getDefaultOption());
-        // 设置定位监听
-        locationClient.setLocationListener(locationListener);
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        deactivate();
     }
 
     /**
-     * 默认的定位参数
-     *
-     * @author hongming.wang
-     * @since 2.8.0
+     * 定位成功后回调函数
      */
-    private AMapLocationClientOption getDefaultOption() {
-        AMapLocationClientOption mOption = new AMapLocationClientOption();
-        mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);//设置为高精度模式提升定位精度
-        return mOption;
-    }
-
-    /**
-     * 定位监听
-     */
-    AMapLocationListener locationListener = new AMapLocationListener() {
-        @Override
-        public void onLocationChanged(AMapLocation loc) {
-            if (null != loc) {
-                //解析定位结果
-                String result = Utils.getLocationStr(loc);
-                tvResult.setText(result);
+    @Override
+    public void onLocationChanged(AMapLocation amapLocation) {
+        if (mListener != null && amapLocation != null) {
+            if (amapLocation != null
+                    && amapLocation.getErrorCode() == 0) {
+                mLocationErrText.setVisibility(View.GONE);
+                mListener.onLocationChanged(amapLocation);// 显示系统小蓝点
             } else {
-                tvResult.setText("定位失败，loc is null");
+                String errText = "定位失败," + amapLocation.getErrorCode() + ": " + amapLocation.getErrorInfo();
+                Log.e("AmapErr", errText);
+                mLocationErrText.setVisibility(View.VISIBLE);
+                mLocationErrText.setText(errText);
             }
         }
-    };
+    }
 
     /**
-     * 开始定位
-     *
-     * @author hongming.wang
-     * @since 2.8.0
+     * 激活定位
      */
-    private void startLocation() {
-        // 设置定位参数
-        locationClient.setLocationOption(locationOption);
-        // 启动定位
-        locationClient.startLocation();
+    @Override
+    public void activate(OnLocationChangedListener listener) {
+        checkWifiSetting();
+        mListener = listener;
+        if (mlocationClient == null) {
+            mlocationClient = new AMapLocationClient(this);
+            mLocationOption = new AMapLocationClientOption();
+            //设置定位监听
+            mlocationClient.setLocationListener(this);
+            //设置为高精度定位模式
+            mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+            //设置定位参数
+            mlocationClient.setLocationOption(mLocationOption);
+            // 此方法为每隔固定时间会发起一次定位请求，为了减少电量消耗或网络流量消耗，
+            // 注意设置合适的定位时间的间隔（最小间隔支持为2000ms），并且在合适时间调用stopLocation()方法来取消定位请求
+            // 在定位结束后，在合适的生命周期调用onDestroy()方法
+            // 在单次定位情况下，定位无论成功与否，都无需调用stopLocation()方法移除请求，定位sdk内部会移除
+            mlocationClient.startLocation();
+
+            mLocationOption.setSensorEnable(false);
+        }
     }
 
     /**
      * 停止定位
-     *
-     * @author hongming.wang
-     * @since 2.8.0
      */
-    private void stopLocation() {
-        // 停止定位
-        locationClient.stopLocation();
-    }
-
-    /**
-     * 销毁定位
-     *
-     * @author hongming.wang
-     * @since 2.8.0
-     */
-    private void destroyLocation() {
-        if (null != locationClient) {
-            /**
-             * 如果AMapLocationClient是在当前Activity实例化的，
-             * 在Activity的onDestroy中一定要执行AMapLocationClient的onDestroy
-             */
-            locationClient.onDestroy();
-            locationClient = null;
-            locationOption = null;
+    @Override
+    public void deactivate() {
+        mListener = null;
+        if (mlocationClient != null) {
+            mlocationClient.stopLocation();
+            mlocationClient.onDestroy();
         }
+        mlocationClient = null;
     }
 }
